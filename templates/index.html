@@ -9,8 +9,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>Авансовый отчёт (форма АО-1)</h1>
-            <p class="subtitle">Заполните данные, добавьте чеки и получите готовый XLS + PDF</p>
+            <div class="header-top">
+                <div>
+                    <h1>Авансовый отчёт (форма АО-1)</h1>
+                    <p class="subtitle">Заполните данные, добавьте чеки и получите готовый XLS + PDF</p>
+                </div>
+                <button type="button" class="btn-profile" onclick="openProfileModal()">⚙️ Профиль</button>
+            </div>
         </header>
 
         <form id="aoForm" onsubmit="event.preventDefault(); generate();">
@@ -78,8 +83,48 @@
         <div id="error" class="error hidden"></div>
     </div>
 
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Мой профиль</h3>
+                <button type="button" class="btn-remove" onclick="closeProfileModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="field">
+                    <label>Организация</label>
+                    <input type="text" id="prof_organization" value="ИП Ермилов МВ">
+                </div>
+                <div class="field">
+                    <label>Структурное подразделение</label>
+                    <input type="text" id="prof_department" value="Офис">
+                </div>
+                <div class="field">
+                    <label>ФИО</label>
+                    <input type="text" id="prof_fio" placeholder="Иванов И.И.">
+                </div>
+                <div class="field">
+                    <label>Должность</label>
+                    <input type="text" id="prof_position" placeholder="Куратор">
+                </div>
+                <div class="field">
+                    <label>Табельный номер</label>
+                    <input type="text" id="prof_tab_number">
+                </div>
+                <div class="field">
+                    <label>Назначение аванса</label>
+                    <input type="text" id="prof_purpose" value="Хоз расходы">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" onclick="saveProfile()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let checkCounter = 0;
+        let profile = {};
 
         function addCheck(data = {}) {
             checkCounter++;
@@ -114,10 +159,15 @@
                         <input type="text" class="debit_account" value="${data.debit_account || 'Студия'}" placeholder="Студия">
                     </div>
                     <div class="field fullwidth">
-                        <label>Фото чека (опционально, для сверки)</label>
+                        <label>Фото чека (для сверки)</label>
                         <input type="file" class="photo" accept="image/*">
                     </div>
                 </div>
+                <div class="qr-row">
+                    <input type="file" class="qr-image" accept="image/*" onchange="uploadQr(this, ${checkCounter})">
+                    <button type="button" class="btn-scan" onclick="this.previousElementSibling.click()">📷 Загрузить фото с QR-кодом</button>
+                </div>
+                <div class="qr-status"></div>
             `;
             container.appendChild(div);
         }
@@ -125,6 +175,114 @@
         function removeCheck(id) {
             const el = document.getElementById(`check_${id}`);
             if (el) el.remove();
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/profile');
+                profile = await res.json();
+                applyProfileToForm();
+                syncProfileModal();
+            } catch (e) {
+                console.error('Не удалось загрузить профиль', e);
+            }
+        }
+
+        function applyProfileToForm() {
+            if (profile.organization) document.getElementById('organization').value = profile.organization;
+            if (profile.department) document.getElementById('department').value = profile.department;
+            if (profile.fio) document.getElementById('fio').value = profile.fio;
+            if (profile.position) document.getElementById('position').value = profile.position;
+            if (profile.tab_number) document.getElementById('tab_number').value = profile.tab_number;
+            if (profile.purpose) document.getElementById('purpose').value = profile.purpose;
+        }
+
+        function syncProfileModal() {
+            document.getElementById('prof_organization').value = profile.organization || '';
+            document.getElementById('prof_department').value = profile.department || '';
+            document.getElementById('prof_fio').value = profile.fio || '';
+            document.getElementById('prof_position').value = profile.position || '';
+            document.getElementById('prof_tab_number').value = profile.tab_number || '';
+            document.getElementById('prof_purpose').value = profile.purpose || '';
+        }
+
+        function openProfileModal() {
+            syncProfileModal();
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        async function saveProfile() {
+            const payload = {
+                organization: document.getElementById('prof_organization').value,
+                department: document.getElementById('prof_department').value,
+                fio: document.getElementById('prof_fio').value,
+                position: document.getElementById('prof_position').value,
+                tab_number: document.getElementById('prof_tab_number').value,
+                purpose: document.getElementById('prof_purpose').value,
+            };
+            try {
+                const res = await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    profile = json.profile;
+                    applyProfileToForm();
+                    closeProfileModal();
+                    alert('Профиль сохранён!');
+                }
+            } catch (e) {
+                alert('Ошибка сохранения профиля');
+            }
+        }
+
+        async function uploadQr(input, checkId) {
+            const card = document.getElementById(`check_${checkId}`);
+            const statusEl = card.querySelector('.qr-status');
+            statusEl.textContent = '🔍 Распознаём QR-код...';
+            statusEl.style.color = '#666';
+
+            if (!input.files || !input.files[0]) {
+                statusEl.textContent = '';
+                return;
+            }
+
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('qr_image', file);
+
+            try {
+                const res = await fetch('/parse_qr_image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const json = await res.json();
+
+                if (!json.success) {
+                    statusEl.textContent = '❌ ' + (json.error || 'Ошибка распознавания');
+                    statusEl.style.color = '#b91c1c';
+                    return;
+                }
+
+                if (json.parsed.doc_date) card.querySelector('.doc_date').value = json.parsed.doc_date;
+                if (json.parsed.amount) card.querySelector('.amount').value = json.parsed.amount;
+                if (json.parsed.doc_number) card.querySelector('.doc_number').value = json.parsed.doc_number;
+
+                statusEl.textContent = '✅ QR распознан. Введите наименование товара вручную.';
+                statusEl.style.color = '#059669';
+
+                card.style.background = '#dcfce7';
+                setTimeout(() => card.style.background = '', 600);
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#b91c1c';
+            }
         }
 
         // Add first check by default
@@ -136,6 +294,9 @@
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const yyyy = today.getFullYear();
         document.getElementById('report_date').value = `${dd}.${mm}.${yyyy}`;
+
+        // Load profile on startup
+        loadProfile();
 
         async function generate() {
             const btn = document.querySelector('.btn-primary');

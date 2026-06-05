@@ -2,9 +2,13 @@ import os
 import shutil
 import uuid
 from datetime import datetime
+from urllib.parse import parse_qs, urlparse
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import win32com.client
 import pythoncom
+import requests
+from PIL import Image
+from pyzbar.pyzbar import decode
 
 app = Flask(__name__)
 
@@ -15,6 +19,36 @@ UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+PROFILE_PATH = os.path.join(BASE_DIR, "data", "profile.json")
+os.makedirs(os.path.dirname(PROFILE_PATH), exist_ok=True)
+
+DEFAULT_PROFILE = {
+    "organization": "ИП Ермилов МВ",
+    "department": "Офис",
+    "fio": "",
+    "position": "",
+    "tab_number": "",
+    "purpose": "Хоз расходы",
+}
+
+
+def load_profile():
+    if os.path.exists(PROFILE_PATH):
+        try:
+            with open(PROFILE_PATH, "r", encoding="utf-8") as f:
+                import json
+                return {**DEFAULT_PROFILE, **json.load(f)}
+        except Exception:
+            pass
+    return DEFAULT_PROFILE.copy()
+
+
+def save_profile(profile):
+    os.makedirs(os.path.dirname(PROFILE_PATH), exist_ok=True)
+    with open(PROFILE_PATH, "w", encoding="utf-8") as f:
+        import json
+        json.dump(profile, f, ensure_ascii=False, indent=2)
 
 
 def excel_col_letter(col_idx_0based):
@@ -196,6 +230,168 @@ def generate():
 @app.route("/download/<filename>")
 def download(filename):
     return send_from_directory(OUTPUT_DIR, filename, as_attachment=True)
+
+
+@app.route("/api/profile", methods=["GET"])
+def get_profile():
+    return jsonify(load_profile())
+
+
+@app.route("/api/profile", methods=["POST"])
+def update_profile():
+    try:
+        payload = request.get_json(force=True)
+        profile = load_profile()
+        for key in DEFAULT_PROFILE:
+            if key in payload:
+                profile[key] = payload[key]
+        save_profile(profile)
+        return jsonify({"success": True, "profile": profile})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def _parse_qr_raw(qr_text):
+    """Parse fiscal receipt QR string (RU format)."""
+    if '?' in qr_text:
+        qr_text = qr_text.split('?')[1]
+    params = parse_qs(qr_text)
+    t = params.get('t', [None])[0]
+    s = params.get('s', [None])[0]
+    fn = params.get('fn', [None])[0]
+    i = params.get('i', [None])[0]
+    fp = params.get('fp', [None])[0]
+
+    if not t or not s:
+        return None
+
+    year = t[0:4]
+    month = t[4:6]
+    day = t[6:8]
+    return {
+        'doc_date': f'{day}/{month}',
+        'amount': float(s),
+        'doc_number': f'ФД {i}' if i else (f'ФП {fp}' if fp else (f'ФН {fn}' if fn else '')),
+        'raw': qr_text,
+    }
+
+
+@app.route("/parse_qr_image", methods=["POST"])
+def parse_qr_image():
+    try:
+        if 'qr_image' not in request.files:
+            return jsonify({'error': 'Файл не загружен'}), 400
+
+        file = request.files['qr_image']
+        if file.filename == '':
+            return jsonify({'error': 'Файл не выбран'}), 400
+
+        # Save temporarily
+        ext = os.path.splitext(file.filename)[1] or '.png'
+        tmp_name = f"qr_tmp_{uuid.uuid4().hex}{ext}"
+        tmp_path = os.path.join(UPLOAD_DIR, tmp_name)
+        file.save(tmp_path)
+
+        # Decode QR
+        img = Image.open(tmp_path)
+        decoded = decode(img)
+
+        # Clean up temp file
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+
+        if not decoded:
+            return jsonify({'error': 'QR-код не найден на изображении'}), 400
+
+        # Take first decoded QR
+        qr_text = decoded[0].data.decode('utf-8')
+        parsed = _parse_qr_raw(qr_text)
+
+        if not parsed:
+            return jsonify({'error': 'QR-код найден, но не распознан как фискальный чек'}), 400
+
+        return jsonify({
+            'success': True,
+            'raw': parsed['raw'],
+            'parsed': {
+                'doc_date': parsed['doc_date'],
+                'amount': parsed['amount'],
+                'doc_number': parsed['doc_number'],
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route("/fetch_receipt", methods=["POST"])
+def fetch_receipt():
+    try:
+        payload = request.get_json(force=True)
+        qrraw = payload.get('qrraw')
+        token = payload.get('token')
+
+        if not qrraw:
+            return jsonify({'error': 'Отсутствует qrraw'}), 400
+        if not token:
+            return jsonify({'error': 'Отсутствует токен API'}), 400
+
+        url = 'https://proverkacheka.com/api/v1/check/get'
+        data = {
+            'token': token,
+            'qrraw': qrraw,
+        }
+
+        resp = requests.post(url, data=data, timeout=30)
+        resp_json = resp.json()
+
+        if resp_json.get('code') != 1:
+            error_msg = resp_json.get('message', 'Неизвестная ошибка API')
+            return jsonify({'error': f'Ошибка API: {error_msg}'}), 400
+
+        receipt_data = resp_json.get('data', {}).get('json', {})
+
+        # Extract items
+        items = []
+        for item in receipt_data.get('items', []):
+            items.append({
+                'name': item.get('name', ''),
+                'price': item.get('price', 0) / 100.0 if item.get('price') else 0,
+                'quantity': item.get('quantity', 1),
+                'sum': item.get('sum', 0) / 100.0 if item.get('sum') else 0,
+            })
+
+        # VAT
+        vat = 0
+        if 'nds10' in receipt_data:
+            vat += receipt_data['nds10'] / 100.0
+        if 'nds20' in receipt_data:
+            vat += receipt_data['nds20'] / 100.0
+        if 'ndsNo' in receipt_data:
+            vat += receipt_data['ndsNo'] / 100.0
+
+        # DateTime
+        dt_raw = receipt_data.get('dateTime', '')
+        doc_date = ''
+        if dt_raw and len(dt_raw) >= 10:
+            try:
+                dt = datetime.fromisoformat(dt_raw.replace('Z', '+00:00'))
+                doc_date = dt.strftime('%d/%m')
+            except Exception:
+                pass
+
+        return jsonify({
+            'success': True,
+            'shop': receipt_data.get('organization', {}).get('name', ''),
+            'items': items,
+            'total': receipt_data.get('totalSum', 0) / 100.0,
+            'vat': vat,
+            'doc_date': doc_date,
+            'raw': receipt_data,
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == "__main__":
