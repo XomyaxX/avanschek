@@ -22,9 +22,15 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.x'
           channel: stable
           cache: true
+
+      - name: Create .env from template
+        run: |
+          cp assets/.env.example assets/.env
+          echo "✅ .env created:"
+          cat assets/.env
+          ls -la assets/
 
       - name: Get dependencies
         run: flutter pub get
@@ -53,12 +59,18 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.x'
           channel: stable
           cache: true
 
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
+
+      - name: Create .env from template
+        run: |
+          Copy-Item assets/.env.example assets/.env
+          Write-Host "✅ .env created:"
+          Get-Content assets/.env
+          Get-ChildItem assets/
 
       - name: Get dependencies
         run: flutter pub get
