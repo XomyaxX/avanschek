@@ -11,6 +11,8 @@
 - 🔗 **Получение полных данных из ФНС** через proverkacheka.com (список товаров, НДС, магазин)
 - 📄 Генерация XLS + PDF через сервер Flask
 - 📥 Скачивание и отправка готовых документов
+- 🕘 **История отчётов** — сохранение всех сгенерированных отчётов в локальной базе данных
+- 💾 **Автосохранение черновиков** — при закрытии приложения несохранённые данные восстанавливаются при следующем запуске
 
 ## Архитектура
 
@@ -32,13 +34,15 @@
 
 ## Настройка IP сервера
 
-Перед сборкой откройте `lib/services/api_service.dart` и измените `baseUrl` на IP-адрес компьютера, где запущен Flask:
+Перед сборкой создайте/измените файл `assets/.env`:
 
-```dart
-ApiService({this.baseUrl = 'http://192.168.1.132:5000'});
+```env
+API_BASE_URL=http://192.168.1.132:5000
 ```
 
 Узнать IP компьютера: запустите `python app.py` в папке проекта — IP покажется в консоли.
+
+> **Важно:** файл `assets/.env` добавлен в `.gitignore` и не попадёт в репозиторий.
 
 ## Сборка APK (Android)
 
@@ -68,15 +72,21 @@ flutter run
 
 ```
 lib/
-├── main.dart                 # Точка входа
+├── main.dart                    # Точка входа
 ├── models/
-│   ├── check.dart            # Модель чека
-│   └── report_data.dart      # Модель данных отчёта
+│   ├── check.dart               # Модель чека
+│   └── report_data.dart         # Модель данных отчёта
 ├── services/
-│   └── api_service.dart      # HTTP-клиент для Flask API
+│   ├── api_service.dart         # HTTP-клиент для Flask API
+│   ├── db_service.dart          # Локальная SQLite база данных
+│   └── prefs_service.dart       # SharedPreferences wrapper
 └── screens/
-    ├── home_screen.dart      # Главный экран (форма + чеки)
-    └── qr_scan_screen.dart   # Экран сканирования QR камерой
+    ├── home_screen.dart         # Главный экран (форма + чеки)
+    ├── qr_scan_screen.dart      # Экран сканирования QR камерой
+    ├── history_screen.dart      # История сохранённых отчётов
+    ├── settings_screen.dart     # Настройки профиля
+    ├── onboarding_screen.dart   # Инструкция для новых пользователей
+    └── profile_setup_screen.dart # Первоначальная настройка профиля
 ```
 
 ## Получение токена API ФНС

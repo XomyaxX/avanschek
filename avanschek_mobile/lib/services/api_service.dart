@@ -1,14 +1,36 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/report_data.dart';
 import '../models/check.dart';
 
 class ApiService {
-  String baseUrl;
+  late String baseUrl;
 
-  ApiService({this.baseUrl = 'http://192.168.1.132:5000'});
+  ApiService({String? baseUrl}) {
+    this.baseUrl = baseUrl ?? dotenv.env['API_BASE_URL'] ?? 'http://192.168.1.132:5000';
+  }
+
+  static const _timeout = Duration(seconds: 15);
+
+  String _formatError(Object error) {
+    if (error is SocketException) {
+      return 'Нет подключения к серверу. Проверьте IP-адрес и что сервер запущен.';
+    }
+    if (error is TimeoutException) {
+      return 'Сервер не отвечает. Попробуйте позже.';
+    }
+    if (error is FormatException) {
+      return 'Некорректный ответ сервера.';
+    }
+    if (error is http.ClientException) {
+      return 'Ошибка подключения к серверу.';
+    }
+    return 'Ошибка сети: $error';
+  }
 
   Future<Map<String, dynamic>> generateReport(
     ReportData data,
@@ -20,17 +42,23 @@ class ApiService {
       'checks': checks.map((c) => c.toJson()).toList(),
     });
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    );
+    try {
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: body,
+          )
+          .timeout(_timeout);
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Ошибка генерации');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка генерации');
+      }
+    } on Exception catch (e) {
+      throw Exception(_formatError(e));
     }
   }
 
@@ -38,7 +66,6 @@ class ApiService {
     final url = Uri.parse('$baseUrl/parse_qr_image');
     final request = http.MultipartRequest('POST', url);
 
-    // Определяем MIME-тип по расширению файла
     final ext = imageFile.path.split('.').last.toLowerCase();
     String mimeType;
     switch (ext) {
@@ -64,44 +91,60 @@ class ApiService {
       contentType: MediaType.parse(mimeType),
     ));
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    try {
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Ошибка распознавания QR');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка распознавания QR');
+      }
+    } on Exception catch (e) {
+      throw Exception(_formatError(e));
     }
   }
 
   Future<Map<String, dynamic>> fetchReceipt(String qrraw, String token) async {
     final url = Uri.parse('$baseUrl/fetch_receipt');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'qrraw': qrraw, 'token': token}),
-    );
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Ошибка получения данных из ФНС');
+    try {
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'qrraw': qrraw, 'token': token}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка получения данных из ФНС');
+      }
+    } on Exception catch (e) {
+      throw Exception(_formatError(e));
     }
   }
 
   Future<File> downloadFile(String urlPath, String fileName) async {
     final url = Uri.parse('$baseUrl$urlPath');
-    final response = await http.get(url);
 
-    if (response.statusCode != 200) {
-      throw Exception('Ошибка скачивания файла');
+    try {
+      final response = await http.get(url).timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        throw Exception('Ошибка скачивания файла');
+      }
+
+      final dir = Directory.systemTemp;
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(response.bodyBytes);
+      return file;
+    } on Exception catch (e) {
+      throw Exception(_formatError(e));
     }
-
-    final dir = Directory.systemTemp;
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(response.bodyBytes);
-    return file;
   }
 }

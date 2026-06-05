@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/check.dart';
 import '../models/report_data.dart';
 import '../services/api_service.dart';
+import '../services/db_service.dart';
 import '../services/prefs_service.dart';
 import 'qr_scan_screen.dart';
 import 'settings_screen.dart';
@@ -30,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = false;
   String? _xlsUrl;
   String? _pdfUrl;
-  bool _requisitesExpanded = false;
+  Timer? _draftTimer;
 
   @override
   void initState() {
@@ -39,8 +42,20 @@ class _HomeScreenState extends State<HomeScreen> {
     _data.reportDate =
         '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
     _loadSavedProfile();
-    _addCheck();
     _checkFirstLaunch();
+  }
+
+  @override
+  void dispose() {
+    _draftTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleDraftSave() {
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(seconds: 2), () {
+      DbService.saveDraft(_data, _checks);
+    });
   }
 
   Future<void> _loadSavedProfile() async {
@@ -71,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
         await _loadSavedProfile();
+        await _checkDraft();
         return;
       }
       final hasSeenOnboarding = await PrefsService.getHasSeenOnboarding();
@@ -82,13 +98,92 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
+      await _checkDraft();
     });
+  }
+
+  Future<void> _checkDraft() async {
+    final draft = await DbService.getDraft();
+    if (draft == null || !mounted) return;
+
+    final restore = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Восстановить черновик?'),
+        content: const Text(
+            'Найден несохранённый отчёт. Хотите восстановить его или начать новый?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Начать новый'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade800,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Восстановить'),
+          ),
+        ],
+      ),
+    );
+
+    if (restore == true) {
+      _restoreDraft(draft);
+    } else {
+      await DbService.clearDraft();
+      setState(() {
+        _checks.clear();
+        _addCheck();
+      });
+    }
+  }
+
+  void _restoreDraft(Map<String, dynamic> draft) {
+    try {
+      final reportJson = draft['report_json'] as String?;
+      final checksJson = draft['checks_json'] as String?;
+      if (reportJson == null || checksJson == null) return;
+
+      final reportMap = Map<String, dynamic>.from(
+          (jsonDecode(reportJson) as Map).cast<String, dynamic>());
+      final checksList = (jsonDecode(checksJson) as List)
+          .map((e) => Map<String, dynamic>.from((e as Map).cast<String, dynamic>()))
+          .toList();
+
+      setState(() {
+        _data.organization = reportMap['organization'] ?? 'ИП Ермилов МВ';
+        _data.department = reportMap['department'] ?? 'Офис';
+        _data.fio = reportMap['fio'] ?? '';
+        _data.position = reportMap['position'] ?? '';
+        _data.tabNumber = reportMap['tab_number'] ?? '';
+        _data.purpose = reportMap['purpose'] ?? 'Хоз расходы';
+        _data.reportNumber = reportMap['report_number'] ?? '';
+        _data.reportDate = reportMap['report_date'] ?? '';
+        _data.advanceReceived = (reportMap['advance_received'] as num?)?.toDouble() ?? 0.0;
+
+        _checks.clear();
+        for (final c in checksList) {
+          _checks.add(Check(
+            docDate: c['doc_date'] ?? '',
+            docNumber: c['doc_number'] ?? '',
+            name: c['name'] ?? '',
+            amount: (c['amount'] as num?)?.toDouble() ?? 0.0,
+          ));
+        }
+        if (_checks.isEmpty) _addCheck();
+      });
+    } catch (e) {
+      debugPrint('Ошибка восстановления черновика: $e');
+    }
   }
 
   void _addCheck() {
     setState(() {
       _checks.add(Check());
     });
+    _scheduleDraftSave();
   }
 
   void _removeCheck(int index) {
@@ -96,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _checks.removeAt(index);
       if (_checks.isEmpty) _addCheck();
     });
+    _scheduleDraftSave();
   }
 
   Future<void> _scanQr(int index) async {
@@ -177,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         _checks[index].revision++;
         setState(() {});
+        _scheduleDraftSave();
       } else {
         _showSnack('❌ Не удалось распознать QR-код на фото');
       }
@@ -205,6 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     _checks[index].revision++;
     setState(() {});
+    _scheduleDraftSave();
     _showSnack('✅ QR распознан. Введите наименование вручную.');
   }
 
@@ -232,11 +330,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final result = await _api.generateReport(_data, _checks);
+      final totalAmount = _checks.fold<double>(0, (sum, c) => sum + c.amount);
+
+      await DbService.saveReport(
+        data: _data,
+        checks: _checks,
+        totalAmount: totalAmount,
+        xlsPath: result['xls'] as String?,
+        pdfPath: result['pdf'] as String?,
+      );
+      await DbService.clearDraft();
+
       setState(() {
         _xlsUrl = result['xls'];
         _pdfUrl = result['pdf'];
       });
-      _showSnack('✅ Документы сгенерированы!');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('✅ Документы сгенерированы и сохранены!'),
+            action: SnackBarAction(
+              label: 'История',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                );
+              },
+            ),
+          ),
+        );
+      }
     } catch (e) {
       _showSnack('❌ Ошибка: $e');
     } finally {
@@ -266,7 +390,6 @@ class _HomeScreenState extends State<HomeScreen> {
       initialDate: initialDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
-
     );
 
     if (picked != null) {
@@ -274,6 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _data.reportDate =
             '${picked.day.toString().padLeft(2, '0')}.${picked.month.toString().padLeft(2, '0')}.${picked.year}';
       });
+      _scheduleDraftSave();
     }
   }
 
@@ -607,7 +731,10 @@ class _HomeScreenState extends State<HomeScreen> {
         validator: required
             ? (v) => v == null || v.isEmpty ? 'Обязательное поле' : null
             : null,
-        onChanged: onChanged,
+        onChanged: (v) {
+          onChanged(v);
+          _scheduleDraftSave();
+        },
       ),
     );
   }
@@ -628,7 +755,10 @@ class _HomeScreenState extends State<HomeScreen> {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),
-        onChanged: (v) => onChanged(double.tryParse(v) ?? 0.0),
+        onChanged: (v) {
+          onChanged(double.tryParse(v) ?? 0.0);
+          _scheduleDraftSave();
+        },
       ),
     );
   }
