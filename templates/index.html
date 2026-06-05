@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авансовый отчёт — Генератор АО-1</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Авансовый отчёт (форма АО-1)</h1>
+            <p class="subtitle">Заполните данные, добавьте чеки и получите готовый XLS + PDF</p>
+        </header>
+
+        <form id="aoForm" onsubmit="event.preventDefault(); generate();">
+            <section class="card">
+                <h2>📋 Общие данные</h2>
+                <div class="grid">
+                    <div class="field">
+                        <label for="organization">Организация</label>
+                        <input type="text" id="organization" value="ИП Ермилов МВ">
+                    </div>
+                    <div class="field">
+                        <label for="department">Структурное подразделение</label>
+                        <input type="text" id="department" value="Офис">
+                    </div>
+                    <div class="field">
+                        <label for="fio">Подотчётное лицо (ФИО)</label>
+                        <input type="text" id="fio" placeholder="Иванов И.И." required>
+                    </div>
+                    <div class="field">
+                        <label for="position">Должность</label>
+                        <input type="text" id="position" placeholder="Куратор" required>
+                    </div>
+                    <div class="field">
+                        <label for="tab_number">Табельный номер</label>
+                        <input type="text" id="tab_number">
+                    </div>
+                    <div class="field">
+                        <label for="purpose">Назначение аванса</label>
+                        <input type="text" id="purpose" value="Хоз расходы">
+                    </div>
+                    <div class="field">
+                        <label for="report_number">Номер авансового отчёта</label>
+                        <input type="text" id="report_number" placeholder="01/06">
+                    </div>
+                    <div class="field">
+                        <label for="report_date">Дата отчёта</label>
+                        <input type="text" id="report_date" placeholder="ДД.ММ.ГГГГ" required>
+                    </div>
+                    <div class="field">
+                        <label for="advance_received">Получено аванса, ₽</label>
+                        <input type="number" id="advance_received" step="0.01" value="0">
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>🧾 Чеки и документы</h2>
+                <div id="checksContainer"></div>
+                <button type="button" class="btn-secondary" onclick="addCheck()">+ Добавить чек</button>
+            </section>
+
+            <div class="actions">
+                <button type="submit" class="btn-primary">Сгенерировать документы</button>
+            </div>
+        </form>
+
+        <div id="result" class="result hidden">
+            <h2>✅ Готово!</h2>
+            <div class="downloads">
+                <a id="linkXls" href="#" class="btn-download" download>Скачать Excel (.xls)</a>
+                <a id="linkPdf" href="#" class="btn-download" download>Скачать PDF (печать)</a>
+            </div>
+        </div>
+
+        <div id="error" class="error hidden"></div>
+    </div>
+
+    <script>
+        let checkCounter = 0;
+
+        function addCheck(data = {}) {
+            checkCounter++;
+            const container = document.getElementById('checksContainer');
+            const div = document.createElement('div');
+            div.className = 'check-card';
+            div.id = `check_${checkCounter}`;
+            div.innerHTML = `
+                <div class="check-header">
+                    <strong>Документ #${checkCounter}</strong>
+                    <button type="button" class="btn-remove" onclick="removeCheck(${checkCounter})">Удалить</button>
+                </div>
+                <div class="grid">
+                    <div class="field">
+                        <label>Дата документа (ДД.ММ)</label>
+                        <input type="text" class="doc_date" value="${data.doc_date || ''}" placeholder="29/05" required>
+                    </div>
+                    <div class="field">
+                        <label>Номер документа / чека</label>
+                        <input type="text" class="doc_number" value="${data.doc_number || ''}" placeholder="Чек №123">
+                    </div>
+                    <div class="field">
+                        <label>Наименование / назначение</label>
+                        <input type="text" class="name" value="${data.name || ''}" placeholder="Канцтовары" required>
+                    </div>
+                    <div class="field">
+                        <label>Сумма, ₽</label>
+                        <input type="number" class="amount" step="0.01" value="${data.amount || ''}" placeholder="1200.50" required>
+                    </div>
+                    <div class="field">
+                        <label>Дебет счёта</label>
+                        <input type="text" class="debit_account" value="${data.debit_account || 'Студия'}" placeholder="Студия">
+                    </div>
+                    <div class="field fullwidth">
+                        <label>Фото чека (опционально, для сверки)</label>
+                        <input type="file" class="photo" accept="image/*">
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeCheck(id) {
+            const el = document.getElementById(`check_${id}`);
+            if (el) el.remove();
+        }
+
+        // Add first check by default
+        addCheck();
+
+        // Auto-fill today's date
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        document.getElementById('report_date').value = `${dd}.${mm}.${yyyy}`;
+
+        async function generate() {
+            const btn = document.querySelector('.btn-primary');
+            btn.disabled = true;
+            btn.textContent = 'Генерация...';
+
+            const checks = [];
+            document.querySelectorAll('.check-card').forEach(card => {
+                checks.push({
+                    doc_date: card.querySelector('.doc_date').value,
+                    doc_number: card.querySelector('.doc_number').value,
+                    name: card.querySelector('.name').value,
+                    amount: parseFloat(card.querySelector('.amount').value) || 0,
+                    debit_account: card.querySelector('.debit_account').value,
+                });
+            });
+
+            const payload = {
+                data: {
+                    organization: document.getElementById('organization').value,
+                    department: document.getElementById('department').value,
+                    fio: document.getElementById('fio').value,
+                    position: document.getElementById('position').value,
+                    tab_number: document.getElementById('tab_number').value,
+                    purpose: document.getElementById('purpose').value,
+                    report_number: document.getElementById('report_number').value,
+                    report_date: document.getElementById('report_date').value,
+                    advance_received: document.getElementById('advance_received').value,
+                },
+                checks: checks
+            };
+
+            try {
+                const res = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+
+                const resultBox = document.getElementById('result');
+                const errorBox = document.getElementById('error');
+
+                if (json.success) {
+                    resultBox.classList.remove('hidden');
+                    errorBox.classList.add('hidden');
+                    document.getElementById('linkXls').href = json.xls;
+                    document.getElementById('linkPdf').href = json.pdf;
+                } else {
+                    throw new Error(json.error || 'Ошибка генерации');
+                }
+            } catch (e) {
+                document.getElementById('error').textContent = 'Ошибка: ' + e.message;
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('result').classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Сгенерировать документы';
+            }
+        }
+    </script>
+</body>
+</html>
