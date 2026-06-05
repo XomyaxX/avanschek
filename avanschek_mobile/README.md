@@ -50,15 +50,19 @@ API_BASE_URL=http://192.168.1.132:5000
 
 ## Скачать готовый APK (без сборки)
 
-После каждого обновления в репозитории GitHub **автоматически собирает** APK и Windows-версию:
+### 🔗 Прямая ссылка (самый простой способ)
+**Страница скачивания:** https://xomyaxx.github.io/avanschek/
 
+Или скачай напрямую с GitHub Releases:
+- **APK (Android):** https://github.com/XomyaxX/avanschek/releases/tag/latest
+- **Windows (ZIP):** https://github.com/XomyaxX/avanschek/releases/tag/latest
+
+> ⚠️ APK собран без подписи (debug signing). При установке разрешите "Unknown sources" (Настройки → Безопасность).
+
+### 📦 GitHub Actions (альтернатива)
 1. Откройте https://github.com/XomyaxX/avanschek/actions
 2. Выберите последний успешный workflow (зелёная галочка ✅)
-3. Внизу страницы — секция **Artifacts**:
-   - `avanschek-apk` — Android APK (скачайте, разархивируйте, установите на телефон)
-   - `avanschek-windows` — Windows-версия для теста на ПК
-
-> Альтернатива: [Releases](https://github.com/XomyaxX/avanschek/releases) — если выложены готовые релизы
+3. Внизу — секция **Artifacts** → скачайте `avanschek-apk` (ZIP, распакуйте)
 
 ## Сборка APK (Android) — локально
 

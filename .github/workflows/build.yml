@@ -1,15 +1,17 @@
-name: Build APK & Windows
+name: Build APK & Windows + Release
+
+permissions:
+  contents: write
+  actions: read
 
 on:
   push:
-    branches: [main, master]
-  pull_request:
     branches: [main, master]
   workflow_dispatch:
 
 jobs:
   build-apk:
-    name: Build Android APK (Release)
+    name: Build Android APK
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,9 +30,7 @@ jobs:
       - name: Create .env from template
         run: |
           cp assets/.env.example assets/.env
-          echo "✅ .env created:"
-          cat assets/.env
-          ls -la assets/
+          echo "✅ .env created"
 
       - name: Get dependencies
         run: flutter pub get
@@ -45,8 +45,32 @@ jobs:
           path: avanschek_mobile/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
+      - name: Rename APK
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk avanschek.apk
+
+      - name: Upload APK to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "Latest Build"
+          body: |
+            ## Авансовый отчёт АО-1
+
+            **Собрано:** ${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}
+            **Commit:** ${{ github.sha }}
+
+            ### 📱 Скачать APK (Android)
+            Файл `avanschek.apk` прикреплён ниже.
+
+            > ⚠️ APK собран без подписи (debug signing). При установке разрешите "Unknown sources".
+          files: avanschek_mobile/avanschek.apk
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-windows:
-    name: Build Windows Desktop (Release)
+    name: Build Windows Desktop
     runs-on: windows-latest
     defaults:
       run:
@@ -68,9 +92,7 @@ jobs:
       - name: Create .env from template
         run: |
           Copy-Item assets/.env.example assets/.env
-          Write-Host "✅ .env created:"
-          Get-Content assets/.env
-          Get-ChildItem assets/
+          Write-Host "✅ .env created"
 
       - name: Get dependencies
         run: flutter pub get
@@ -78,9 +100,37 @@ jobs:
       - name: Build Windows
         run: flutter build windows --release
 
+      - name: Zip Windows build
+        run: |
+          $zipPath = "avanschek-windows.zip"
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath $zipPath -Force
+          Write-Host "✅ Zipped to $zipPath"
+        shell: pwsh
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: avanschek-windows
-          path: avanschek_mobile/build/windows/x64/runner/Release/
+          path: avanschek_mobile/avanschek-windows.zip
           retention-days: 30
+
+      - name: Upload Windows ZIP to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "Latest Build"
+          body: |
+            ## Авансовый отчёт АО-1
+
+            **Собрано:** ${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}
+            **Commit:** ${{ github.sha }}
+
+            ### 🖥️ Скачать Windows
+            Файл `avanschek-windows.zip` прикреплён ниже.
+
+            ### 📱 Скачать APK (Android)
+            Смотрите артефакт `avanschek.apk` в этом же релизе.
+          files: avanschek_mobile/avanschek-windows.zip
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
