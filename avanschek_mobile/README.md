@@ -44,7 +44,19 @@ API_BASE_URL=http://192.168.1.132:5000
 
 > **Важно:** файл `assets/.env` добавлен в `.gitignore` и не попадёт в репозиторий.
 
-## Сборка APK (Android)
+## Скачать готовый APK (без сборки)
+
+После каждого обновления в репозитории GitHub **автоматически собирает** APK и Windows-версию:
+
+1. Откройте https://github.com/XomyaxX/avanschek/actions
+2. Выберите последний успешный workflow (зелёная галочка ✅)
+3. Внизу страницы — секция **Artifacts**:
+   - `avanschek-apk` — Android APK (скачайте, разархивируйте, установите на телефон)
+   - `avanschek-windows` — Windows-версия для теста на ПК
+
+> Альтернатива: [Releases](https://github.com/XomyaxX/avanschek/releases) — если выложены готовые релизы
+
+## Сборка APK (Android) — локально
 
 ```bash
 cd C:\avanschek_mobile
@@ -54,6 +66,17 @@ flutter build apk --release
 Готовый APK будет в:
 ```
 build\app\outputs\flutter-apk\app-release.apk
+```
+
+### Скрипт для быстрой сборки (PowerShell)
+
+```powershell
+# build.ps1 — собрать APK и скопировать на рабочий стол
+Set-Location "$PSScriptRoot\avanschek_mobile"
+flutter pub get
+flutter build apk --release
+Copy-Item "build\app\outputs\flutter-apk\app-release.apk" "$env:USERPROFILE\Desktop\avanschek.apk"
+Write-Host "✅ APK скопирован на рабочий стол: $env:USERPROFILE\Desktop\avanschek.apk"
 ```
 
 ## Сборка для Windows (для теста на ПК)

@@ -1,0 +1,74 @@
+name: Build APK & Windows
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build Android APK (Release)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./avanschek_mobile
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.x'
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: avanschek-apk
+          path: avanschek_mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+  build-windows:
+    name: Build Windows Desktop (Release)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ./avanschek_mobile
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.x'
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: avanschek-windows
+          path: avanschek_mobile/build/windows/x64/runner/Release/
+          retention-days: 30
