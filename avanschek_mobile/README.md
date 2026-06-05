@@ -34,7 +34,11 @@
 
 ## Настройка IP сервера
 
-Перед сборкой создайте/измените файл `assets/.env`:
+Перед сборкой создайте/измените файл `assets/.env` (скопируйте из `assets/.env.example`):
+
+```bash
+cp assets/.env.example assets/.env
+```
 
 ```env
 API_BASE_URL=http://192.168.1.132:5000

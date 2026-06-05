@@ -4,7 +4,11 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: 'assets/.env');
+  try {
+    await dotenv.load(fileName: 'assets/.env');
+  } catch (_) {
+    // .env не найден — используем fallback из ApiService
+  }
   runApp(const AvanschekApp());
 }
 

@@ -26,11 +26,6 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Create .env for CI
-        run: |
-          mkdir -p assets
-          echo "API_BASE_URL=http://127.0.0.1:5000" > assets/.env
-
       - name: Get dependencies
         run: flutter pub get
 
@@ -64,12 +59,6 @@ jobs:
 
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
-
-      - name: Create .env for CI
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path assets -Force | Out-Null
-          "API_BASE_URL=http://127.0.0.1:5000" | Out-File -FilePath assets/.env -Encoding utf8
 
       - name: Get dependencies
         run: flutter pub get
