@@ -1,0 +1,73 @@
+Row 6: 1='ИП Ермилов МВ'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 7: 1='(наименование органM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 18: 1='Структурное подраздM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 19: 1='Подотчетное лицо'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 20: 11='(фамилия, инициалы)M | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 24=NoneM | 25=NoneM
+Row 21: 1='Профессия (должностM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 14=NoneM | 15=NoneM | 16=NoneM
+Row 23: 1='Наименование показаM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 24: 1=' Предыдущий аванс'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10='остаток'M | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 25: 1=NoneM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10='перерасход'M | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 26: 1=' Получен аванс 1. иM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 27: 1=' 1а. в валюте (спраM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 28: 1=' 2.'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 29: 1=NoneM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 30: 1=' Итого получено'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 31: 1=' Израсходовано'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 32: 2='Остаток'M | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM
+Row 33: 2='Перерасход'M | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM
+Row 35: 1='Приложение' | 7='-'M | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12='документов на'M | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19='-'M | 20=NoneM
+Row 37: 1='Отчет проверен. К у | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 24=NoneM | 25=NoneM | 26=NoneM | 27=NoneM | 28=NoneM | 29=NoneM | 30=NoneM | 31=NoneM | 32=NoneM
+Row 38: 19='(сумма прописью)'M | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 24=NoneM | 25=NoneM | 26=NoneM | 27=NoneM | 28=NoneM | 29=NoneM | 30=NoneM | 31=NoneM | 32=NoneM | 33=NoneM
+Row 39: 1='Главный бухгалтер'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 40: 10='(подпись)'M | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 27='(расшифровка подписM
+Row 41: 1='Бухгалтер'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 42: 10='(подпись)'M | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 27='(расшифровка подписM
+Row 43: 1='Остаток внесен'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10='в сумме'M | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 44: 1='Перерасход выдан'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM
+Row 45: 1=NoneM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM
+Row 46: 9='Бухгалтер (кассир)' | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 25=NoneM | 26=NoneM
+Row 47: 11='(подпись)'M | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 25='(расшифровка подписM | 26=NoneM | 27=NoneM
+Row 49: 1='л и н и я   о т р еM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 50: 1='Расписка. Принят к M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 51: 5='на сумму ' | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM
+Row 52: 6='(прописью)'M | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM
+Row 53: 9='Бухгалтер' | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 25=NoneM | 26=NoneM
+Row 54: 11='(подпись)'M | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 25='(расшифровка подписM | 26=NoneM | 27=NoneM
+Row 56: 55='Оборотная сторона ф
+Row 58: 1='Номер\nпо порядку'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6='Документ, подтверждM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 59: 1=NoneM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 60: 1=NoneM | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6='дата'M | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11='номер'M | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 61: 1=1M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=2M | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=3M | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 62: 1='1'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 63: 1='2'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 64: 1='3'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 65: 1='4'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 66: 1='5'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 67: 1='6'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 68: 1='7'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 69: 1='8'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 70: 1='9'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 71: 1='10'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 72: 1='11'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 73: 1='12'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 74: 1='13'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 75: 1='14'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 76: 1='15'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 77: 1='16'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 78: 1='17'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 79: 1='18'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 80: 1='19'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 81: 1='20'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 82: 1='21'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 83: 1='22'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 84: 1='23'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 85: 1='24'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 86: 1='25'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 87: 1='26'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 88: 1='27'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 89: 1='28'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 90: 1='29'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 91: 1='30'M | 2=NoneM | 3=NoneM | 4=NoneM | 5=NoneM | 6=NoneM | 7=NoneM | 8=NoneM | 9=NoneM | 10=NoneM | 11=NoneM | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM
+Row 92: 16='Итого 'M | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 24=NoneM | 25='=Y64+Y63+Y65+Y66+Y6M | 26=NoneM | 27=NoneM | 28=NoneM | 29=NoneM | 30=NoneM
+Row 94: 1='Подотчетное лицо' | 12=NoneM | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 24=NoneM | 25=NoneM
+Row 95: 12='(подпись)'M | 13=NoneM | 14=NoneM | 15=NoneM | 16=NoneM | 17=NoneM | 18=NoneM | 19=NoneM | 20=NoneM | 21=NoneM | 22=NoneM | 23=NoneM | 24=NoneM | 25=NoneM | 26=NoneM

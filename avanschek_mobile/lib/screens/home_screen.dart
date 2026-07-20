@@ -3,13 +3,17 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:open_filex/open_filex.dart';
 import '../models/check.dart';
 import '../models/report_data.dart';
-import '../services/api_service.dart';
 import '../services/db_service.dart';
 import '../services/prefs_service.dart';
+import '../services/report_generator.dart';
+import '../services/api_service.dart';
 import 'qr_scan_screen.dart';
 import 'settings_screen.dart';
 import 'history_screen.dart';
@@ -24,7 +28,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _api = ApiService();
+  final _scannerController = MobileScannerController();
   final _formKey = GlobalKey<FormState>();
 
   final _data = ReportData();
@@ -48,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _draftTimer?.cancel();
+    _scannerController.dispose();
     super.dispose();
   }
 
@@ -228,57 +233,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _setCheckLoading(index, true);
     try {
-      final response = await _api.parseQrImage(File(picked.path));
-      if (response['success'] == true) {
-        final parsed = response['parsed'];
-        _checks[index].docDate = parsed['doc_date'] ?? '';
-        _checks[index].amount = (parsed['amount'] as num?)?.toDouble() ?? 0.0;
-        _checks[index].docNumber = parsed['doc_number'] ?? '';
-
-        if (_data.fnsToken.isNotEmpty && response['raw'] != null) {
-          try {
-            final fns = await _api.fetchReceipt(
-              response['raw'] as String,
-              _data.fnsToken,
-            );
-            if (fns['success'] == true) {
-              final items = (fns['items'] as List?)
-                      ?.map((i) => i['name'] as String?)
-                      .where((n) => n != null && n.isNotEmpty)
-                      .toList() ??
-                  [];
-              if (items.isNotEmpty) {
-                _checks[index].name = items.join(', ');
-              }
-              final shop = fns['shop'] as String? ?? '';
-              if (shop.isNotEmpty) {
-                _checks[index].docNumber =
-                    '${_checks[index].docNumber}, $shop'.trim();
-              }
-              if (fns['total'] != null) {
-                _checks[index].amount = (fns['total'] as num).toDouble();
-              }
-              if (fns['doc_date'] != null) {
-                _checks[index].docDate = fns['doc_date'] as String;
-              }
-              _showSnack('✅ Данные из ФНС загружены: ${items.length} товаров');
-            } else {
-              _showSnack('⚠️ QR распознан, но данные ФНС недоступны');
-            }
-          } catch (e) {
-            _showSnack('⚠️ QR распознан, но данные ФНС недоступны');
-          }
+      final barcode = await _scannerController.analyzeImage(picked.path);
+      if (barcode != null && barcode.barcodes.isNotEmpty) {
+        final raw = barcode.barcodes.first.rawValue;
+        if (raw != null) {
+          _applyQrData(index, raw);
+          _showSnack('✅ QR распознан с фото. Введите наименование вручную.');
         } else {
-          _showSnack('✅ QR распознан. Введите наименование вручную.');
+          _showSnack('❌ Не удалось прочитать данные QR-кода');
         }
-        _checks[index].revision++;
-        setState(() {});
-        _scheduleDraftSave();
       } else {
-        _showSnack('❌ Не удалось распознать QR-код на фото');
+        _showSnack('❌ QR-код не найден на фото');
       }
     } catch (e) {
-      _showSnack('❌ Ошибка: $e');
+      _showSnack('❌ Ошибка распознавания: $e');
     } finally {
       _setCheckLoading(index, false);
     }
@@ -329,21 +297,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final result = await _api.generateReport(_data, _checks);
+      final files = await ReportGenerator.generate(
+        data: _data,
+        checks: _checks,
+      );
       final totalAmount = _checks.fold<double>(0, (sum, c) => sum + c.amount);
 
       await DbService.saveReport(
         data: _data,
         checks: _checks,
         totalAmount: totalAmount,
-        xlsPath: result['xls'] as String?,
-        pdfPath: result['pdf'] as String?,
+        xlsPath: files['xls'],
+        pdfPath: files['pdf'],
       );
       await DbService.clearDraft();
 
       setState(() {
-        _xlsUrl = result['xls'];
-        _pdfUrl = result['pdf'];
+        _xlsUrl = files['xls'];
+        _pdfUrl = files['pdf'];
       });
 
       if (mounted) {
@@ -362,19 +333,23 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      _showSnack('❌ Ошибка: $e');
+      _showSnack('❌ Ошибка генерации: $e');
     } finally {
       setState(() => _loading = false);
     }
   }
 
-  Future<void> _download(String? urlPath, String fileName) async {
-    if (urlPath == null) return;
+  Future<void> _download(String? filePath, String fileName) async {
+    if (filePath == null || filePath.isEmpty) return;
     try {
-      final file = await _api.downloadFile(urlPath, fileName);
+      final file = File(filePath);
+      if (!await file.exists()) {
+        _showSnack('❌ Файл не найден');
+        return;
+      }
       await Share.shareXFiles([XFile(file.path)], text: fileName);
     } catch (e) {
-      _showSnack('❌ Ошибка скачивания: $e');
+      _showSnack('❌ Ошибка отправки: $e');
     }
   }
 
@@ -432,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                   break;
                 case 'update':
-                  // Заглушка: обновление приложения
+                  await _performAppUpdate();
                   break;
               }
             },
@@ -512,8 +487,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       _buildNumberField(
                         'Получено аванса, ₽',
                         _data.advanceReceived,
-                        (v) => _data.advanceReceived = v,
+                        (v) {
+                          setState(() => _data.advanceReceived = v);
+                          _scheduleDraftSave();
+                        },
                       ),
+                      const SizedBox(height: 8),
+                      _buildSummaryBar(),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -757,8 +737,50 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         onChanged: (v) {
           onChanged(double.tryParse(v) ?? 0.0);
+          setState(() {});
           _scheduleDraftSave();
         },
+      ),
+    );
+  }
+
+  Widget _buildSummaryBar() {
+    final total = _checks.fold<double>(0, (s, c) => s + c.amount);
+    final balance = _data.advanceReceived - total;
+    final isOver = balance < 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isOver ? Colors.red.shade50 : Colors.green.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isOver ? Colors.red.shade200 : Colors.green.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('По чекам: ${total.toStringAsFixed(2)} ₽',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                Text(
+                  isOver
+                      ? 'Перерасход: ${(-balance).toStringAsFixed(2)} ₽'
+                      : 'Остаток: ${balance.toStringAsFixed(2)} ₽',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isOver ? Colors.red.shade700 : Colors.green.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text('${_checks.length} док.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+        ],
       ),
     );
   }
@@ -876,5 +898,162 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  // === Реализация обновления приложения (кнопка в меню) ===
+  Future<void> _performAppUpdate() async {
+    if (!Platform.isAndroid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Обновления поддерживаются только на Android')),
+      );
+      return;
+    }
+
+    final api = ApiService();
+
+    // Захватываем navigator и messenger как можно раньше (до await и showDialog)
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Показываем индикатор
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final current = await PackageInfo.fromPlatform();
+      final update = await api.checkForUpdate();
+
+      navigator.pop(); // убрать индикатор
+
+      if (update == null ||
+          (update.version == current.version && update.buildNumber == current.buildNumber)) {
+        final msg = update == null
+            ? 'Не удалось проверить обновления (сервер по API_BASE_URL в assets/.env недоступен или не возвращает данные). Текущая версия: ${current.version} (${current.buildNumber})'
+            : '✅ У вас уже последняя версия (${current.version}+${current.buildNumber})';
+        messenger.showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 5)));
+        return;
+      }
+
+      if (!mounted) return;
+
+      // Диалог подтверждения
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Доступно обновление'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Текущая: ${current.version} (${current.buildNumber})'),
+              Text('Новая: ${update.version} (${update.buildNumber})'),
+              if (update.changelog != null && update.changelog!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text('Что нового:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(update.changelog!),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Отмена'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade800),
+              child: const Text('Скачать и установить'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      if (!mounted) return;
+
+      // Прогресс диалог с живым обновлением (bar + текст)
+      final progressNotifier = ValueNotifier<double>(0.0);
+      final statusNotifier = ValueNotifier<String>('Подготовка...');
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Обновление приложения'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<double>(
+                  valueListenable: progressNotifier,
+                  builder: (context, prog, child) => LinearProgressIndicator(value: prog),
+                ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<String>(
+                  valueListenable: statusNotifier,
+                  builder: (context, status, child) => Text(status),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      File? apkFile;
+      try {
+        apkFile = await api.downloadApkWithProgress(
+          update.apkUrl,
+          'avanschek_update.apk',
+          (p) {
+            progressNotifier.value = p.clamp(0.0, 1.0);
+            statusNotifier.value = p < 1.0
+                ? 'Скачивание... ${(p * 100).toInt()}%'
+                : 'Скачивание завершено. Подготовка к установке...';
+          },
+        );
+
+        // Закрыть прогресс (используем захваченный navigator)
+        navigator.pop();
+
+        // Разрешение на установку (используем захваченные navigator/messenger)
+        var installStatus = await Permission.requestInstallPackages.status;
+        if (installStatus.isDenied || installStatus.isRestricted) {
+          installStatus = await Permission.requestInstallPackages.request();
+        }
+
+        if (installStatus.isGranted) {
+          // Используем open_filex — он лучше справляется с открытием .apk и запуском установщика на Android
+          final result = await OpenFilex.open(apkFile.path);
+          if (result.type == ResultType.done) {
+            messenger.showSnackBar(
+              const SnackBar(content: Text('Открыт установщик APK. Следуйте инструкциям на экране.')),
+            );
+          } else {
+            messenger.showSnackBar(
+              SnackBar(content: Text('Не удалось открыть APK для установки: ${result.message} (${result.type})')),
+            );
+          }
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Нужно разрешение на установку приложений из неизвестных источников')),
+          );
+          await openAppSettings();
+        }
+      } catch (e) {
+        navigator.pop(); // закрыть прогресс если открыт
+        messenger.showSnackBar(
+          SnackBar(content: Text('Ошибка при скачивании/установке: $e')),
+        );
+      }
+    } catch (e) {
+      try { navigator.pop(); } catch (_) {}
+      messenger.showSnackBar(
+        SnackBar(content: Text('Ошибка проверки обновлений: $e')),
+      );
+    }
   }
 }

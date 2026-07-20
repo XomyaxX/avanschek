@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../services/prefs_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _departmentController = TextEditingController();
   final _purposeController = TextEditingController();
   bool _loading = true;
+  String _appVersion = '';
 
   @override
   void initState() {
@@ -31,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final organization = await PrefsService.getOrganization();
     final department = await PrefsService.getDepartment();
     final purpose = await PrefsService.getPurpose();
+    final pkg = await PackageInfo.fromPlatform();
     setState(() {
       _fioController.text = fio;
       _positionController.text = position;
@@ -38,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _organizationController.text = organization.isNotEmpty ? organization : 'ИП Ермилов МВ';
       _departmentController.text = department.isNotEmpty ? department : 'Офис';
       _purposeController.text = purpose.isNotEmpty ? purpose : 'Хоз расходы';
+      _appVersion = '${pkg.version} (${pkg.buildNumber})';
       _loading = false;
     });
   }
@@ -170,6 +174,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               labelText: 'Назначение аванса',
                               border: OutlineInputBorder(),
                             ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'Версия приложения: $_appVersion',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                           const SizedBox(height: 24),
                           const Text(

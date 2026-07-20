@@ -147,4 +147,98 @@ class ApiService {
       throw Exception(_formatError(e));
     }
   }
+
+  /// Проверка наличия обновления на сервере.
+  /// Ожидаемый ответ сервера (GET /check_update):
+  /// {
+  ///   "version": "1.0.1",
+  ///   "build_number": "2",
+  ///   "apk_url": "/downloads/avanschek-1.0.1.apk",  // относительный или полный URL
+  ///   "changelog": "Что нового..."
+  /// }
+  Future<UpdateInfo?> checkForUpdate() async {
+    final url = Uri.parse('$baseUrl/check_update');
+    try {
+      final response = await http.get(url).timeout(_timeout);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return UpdateInfo.fromJson(data);
+      }
+    } on Exception {
+      // Не падаем — просто нет обновления или сервер не поддерживает
+    }
+    return null;
+  }
+
+  /// Скачивание APK с прогрессом (0.0 - 1.0).
+  /// urlPathOrFull — относительный путь или полный http URL.
+  /// onProgress вызывается по мере загрузки.
+  Future<File> downloadApkWithProgress(
+    String urlPathOrFull,
+    String fileName,
+    void Function(double progress) onProgress,
+  ) async {
+    Uri url;
+    if (urlPathOrFull.startsWith('http://') || urlPathOrFull.startsWith('https://')) {
+      url = Uri.parse(urlPathOrFull);
+    } else {
+      url = Uri.parse('$baseUrl$urlPathOrFull');
+    }
+
+    try {
+      final request = http.Request('GET', url);
+      final client = http.Client();
+      final streamedResponse = await client.send(request).timeout(_timeout);
+
+      if (streamedResponse.statusCode != 200) {
+        client.close();
+        throw Exception('Ошибка скачивания APK (${streamedResponse.statusCode})');
+      }
+
+      final contentLength = streamedResponse.contentLength ?? 0;
+      int downloaded = 0;
+      final bytes = <int>[];
+
+      await for (final chunk in streamedResponse.stream) {
+        bytes.addAll(chunk);
+        downloaded += chunk.length;
+        if (contentLength > 0) {
+          onProgress(downloaded / contentLength);
+        }
+      }
+
+      client.close();
+
+      final dir = Directory.systemTemp;
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+      return file;
+    } on Exception catch (e) {
+      throw Exception(_formatError(e));
+    }
+  }
+}
+
+/// Простая модель информации об обновлении.
+class UpdateInfo {
+  final String version;
+  final String buildNumber;
+  final String apkUrl;
+  final String? changelog;
+
+  UpdateInfo({
+    required this.version,
+    required this.buildNumber,
+    required this.apkUrl,
+    this.changelog,
+  });
+
+  factory UpdateInfo.fromJson(Map<String, dynamic> json) {
+    return UpdateInfo(
+      version: json['version']?.toString() ?? '',
+      buildNumber: json['build_number']?.toString() ?? '',
+      apkUrl: json['apk_url']?.toString() ?? '',
+      changelog: json['changelog']?.toString(),
+    );
+  }
 }

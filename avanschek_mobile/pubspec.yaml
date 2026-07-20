@@ -40,11 +40,15 @@ dependencies:
   permission_handler: ^11.3.0
   shared_preferences: ^2.5.0
   url_launcher: ^6.2.0
+  open_filex: ^4.1.0
+  package_info_plus: ^8.0.2
   share_plus: ^10.0.0
   flutter_dotenv: ^5.1.2
   sqflite: ^2.3.3+1
   path: ^1.9.0
   intl: ^0.19.0
+  archive: ^3.6.1
+  pdf: ^3.10.8
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +74,8 @@ flutter:
 
   assets:
     - assets/.env
+    - assets/ao1_template.xlsx
+    - assets/fonts/Roboto-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

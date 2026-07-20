@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/db_service.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -102,6 +104,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         actions: [
+          if ((report['xls_path'] as String?)?.isNotEmpty == true)
+            TextButton.icon(
+              onPressed: () async {
+                final path = report['xls_path'] as String;
+                final file = File(path);
+                if (await file.exists()) {
+                  await Share.shareXFiles([XFile(path)], text: 'Авансовый отчёт Excel');
+                }
+              },
+              icon: const Icon(Icons.table_chart, color: Colors.green),
+              label: const Text('Excel'),
+            ),
+          if ((report['pdf_path'] as String?)?.isNotEmpty == true)
+            TextButton.icon(
+              onPressed: () async {
+                final path = report['pdf_path'] as String;
+                final file = File(path);
+                if (await file.exists()) {
+                  await Share.shareXFiles([XFile(path)], text: 'Авансовый отчёт PDF');
+                }
+              },
+              icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+              label: const Text('PDF'),
+            ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Закрыть'),
