@@ -47,18 +47,36 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
 
     if (confirmed == true) {
-      await DbService.deleteReport(id);
-      _loadReports();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🗑️ Отчёт удалён')),
-        );
+      try {
+        await DbService.deleteReport(id);
+        _loadReports();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('🗑️ Отчёт удалён')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('❌ Ошибка удаления: $e')),
+          );
+        }
       }
     }
   }
 
   void _showReportDetails(Map<String, dynamic> report) async {
-    final checks = await DbService.getChecksForReport(report['id'] as int);
+    final List<Map<String, dynamic>> checks;
+    try {
+      checks = await DbService.getChecksForReport(report['id'] as int);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Ошибка загрузки чеков: $e')),
+        );
+      }
+      return;
+    }
     if (!mounted) return;
 
     final dateStr = report['created_at'] != null
@@ -168,6 +186,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Ошибка загрузки истории',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
           }
 
           final reports = snapshot.data ?? [];

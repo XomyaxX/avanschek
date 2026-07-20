@@ -58,8 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _scheduleDraftSave() {
     _draftTimer?.cancel();
-    _draftTimer = Timer(const Duration(seconds: 2), () {
-      DbService.saveDraft(_data, _checks);
+    _draftTimer = Timer(const Duration(seconds: 2), () async {
+      try {
+        await DbService.saveDraft(_data, _checks);
+      } catch (e) {
+        debugPrint('Ошибка сохранения черновика: $e');
+      }
     });
   }
 
@@ -108,7 +112,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkDraft() async {
-    final draft = await DbService.getDraft();
+    final Map<String, dynamic>? draft;
+    try {
+      draft = await DbService.getDraft();
+    } catch (e) {
+      debugPrint('Ошибка чтения черновика: $e');
+      return;
+    }
     if (draft == null || !mounted) return;
 
     final restore = await showDialog<bool>(
@@ -137,7 +147,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (restore == true) {
       _restoreDraft(draft);
     } else {
-      await DbService.clearDraft();
+      try {
+        await DbService.clearDraft();
+      } catch (e) {
+        debugPrint('Ошибка очистки черновика: $e');
+      }
       setState(() {
         _checks.clear();
         _addCheck();
@@ -200,6 +214,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _scanQr(int index) async {
+    if (Platform.isWindows || Platform.isLinux) {
+      _showSnack('📷 Сканирование QR недоступно на десктопе');
+      return;
+    }
     final result = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const QrScanScreen()),
     );
